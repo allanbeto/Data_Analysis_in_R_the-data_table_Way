@@ -14,7 +14,8 @@ The R data.table package is rapidly making its name as the number one choice for
 
 
 ```{r}
-install.packages("data.table")
+#install.packages("data.table")
+library("data.table")
 
 ```
 
@@ -159,10 +160,34 @@ ans2
 ```
 
 
-
-
 ## Data.table yeoman
     Learn how to do multiple operations on the same data.table in one single statement, how to easily take     a subset of your data, update by reference, and work with the data.table set()-family.
+
+
+### Chaining, the basics
+
+Now that you are comfortable with data.table's DT[i, j, by] syntax, it is time to practice some other very useful concepts in data.table. Here, we'll have a more detailed look at chaining.
+
+Chaining allows the concatenation of multiple operations in a single expression. It's easy to read because the operations are carried out from left to right. Furthermore, it helps to avoid the creation of unnecessary temporary variables (which could quickly clutter one's workspace).
+
+Instructions
+In the previous section, you calculated DT2 by taking the cumulative sum of C while grouping by A and B. Next, you selected the last two values of C from DT2 while grouping by A alone. This code is included in the sample code. Use chaining to restructure the code. Simply print out the result of chaining.    
+    
+```{r}
+# The data.table package has already been loaded
+
+# Build DT
+DT <- data.table(A = rep(letters[2:1], each = 4L), 
+                 B = rep(1:4, each = 2L), 
+                 C = sample(8)) 
+DT
+
+# Combine the two steps in a one-liner
+DT2 <- DT[, .(C = cumsum(C)), by = .(A, B)]
+DT2
+DT2[, .(C = tail(C, 2)), by = A]
+```
+    
     
     
 
