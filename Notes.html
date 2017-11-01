@@ -126,13 +126,8 @@ $(document).ready(function () {
 <div id="course-description" class="section level2">
 <h2>Course Description</h2>
 <p>The R data.table package is rapidly making its name as the number one choice for handling large datasets in R. This online data.table tutorial will bring you from data.table novice to expert in no time. Once you are introduced to the general form of a data.table query, you will learn the techniques to subset your data.table, how to update by reference and how you can use data.table’s set()-family in your workflow. The course finishes with more complex concepts such as indexing, keys and fast ordered joins. Upon completion of the course, you will be able to use data.table in R for a more efficient manipulation and analysis process. Enjoy!</p>
-<pre class="r"><code>install.packages(&quot;data.table&quot;)</code></pre>
-<pre><code>## Installing package into 'C:/Users/ThinkPad Pro/Documents/R/Notes/R_notebook/Data_Analysis_in_R_the-data_table_Way/packrat/lib/x86_64-w64-mingw32/3.4.2'
-## (as 'lib' is unspecified)</code></pre>
-<pre><code>## package 'data.table' successfully unpacked and MD5 sums checked
-## 
-## The downloaded binary packages are in
-##  C:\Users\ThinkPad Pro\AppData\Local\Temp\RtmpCWnS8V\downloaded_packages</code></pre>
+<pre class="r"><code>#install.packages(&quot;data.table&quot;)
+library(&quot;data.table&quot;)</code></pre>
 </div>
 <div id="data.table-novice" class="section level2">
 <h2>Data.table novice</h2>
@@ -252,6 +247,191 @@ ans2</code></pre>
 <div id="data.table-yeoman" class="section level2">
 <h2>Data.table yeoman</h2>
 <pre><code>Learn how to do multiple operations on the same data.table in one single statement, how to easily take     a subset of your data, update by reference, and work with the data.table set()-family.</code></pre>
+<div id="chaining-the-basics" class="section level3">
+<h3>Chaining, the basics</h3>
+<p>Now that you are comfortable with data.table’s DT[i, j, by] syntax, it is time to practice some other very useful concepts in data.table. Here, we’ll have a more detailed look at chaining.</p>
+<p>Chaining allows the concatenation of multiple operations in a single expression. It’s easy to read because the operations are carried out from left to right. Furthermore, it helps to avoid the creation of unnecessary temporary variables (which could quickly clutter one’s workspace).</p>
+<p>Instructions In the previous section, you calculated DT2 by taking the cumulative sum of C while grouping by A and B. Next, you selected the last two values of C from DT2 while grouping by A alone. This code is included in the sample code. Use chaining to restructure the code. Simply print out the result of chaining.</p>
+<pre class="r"><code># The data.table package has already been loaded
+
+# Build DT
+DT &lt;- data.table(A = rep(letters[2:1], each = 4L), 
+                 B = rep(1:4, each = 2L), 
+                 C = sample(8)) 
+DT</code></pre>
+<pre><code>##    A B C
+## 1: b 1 5
+## 2: b 1 1
+## 3: b 2 7
+## 4: b 2 3
+## 5: a 3 4
+## 6: a 3 8
+## 7: a 4 6
+## 8: a 4 2</code></pre>
+<pre class="r"><code># Combine the two steps in a one-liner
+DT2 &lt;- DT[, .(C = cumsum(C)), by = .(A, B)]
+DT2</code></pre>
+<pre><code>##    A B  C
+## 1: b 1  5
+## 2: b 1  6
+## 3: b 2  7
+## 4: b 2 10
+## 5: a 3  4
+## 6: a 3 12
+## 7: a 4  6
+## 8: a 4  8</code></pre>
+<pre class="r"><code>DT2[, .(C = tail(C, 2)), by = A]</code></pre>
+<pre><code>##    A  C
+## 1: b  7
+## 2: b 10
+## 3: a  6
+## 4: a  8</code></pre>
+</div>
+<div id="chaining-your-iris-dataset" class="section level3">
+<h3>Chaining your iris dataset</h3>
+<p>In the previous chapter, you converted the iris dataset to a data.table DT. This DT is already available in your workspace. Print DT to the console to remind yourself of its contents. Now, let’s see how you can use chaining to simplify manipulations and calculations.</p>
+<p>Instructions Get the median of each of the four columns Sepal.Length, Sepal.Width, Petal.Length and Petal.Width, while grouping by Species. Reuse the same column names (e.g. the column containing the median Sepal.Length is still called Sepal.Length). Next, order() Species in descending order using chaining. This is deliberately repetitive, but we have a solution for you in the next exercise!</p>
+<pre class="r"><code># The data.table DT is loaded in your workspace
+DT &lt;- as.data.table(iris)
+
+
+# Perform chained operations on DT
+DT[, .(Sepal.Length = median(Sepal.Length), 
+       Sepal.Width = median(Sepal.Width), 
+       Petal.Length = median(Petal.Length),
+       Petal.Width = median(Petal.Width)), 
+   by = Species][order(-Species)]</code></pre>
+<pre><code>##       Species Sepal.Length Sepal.Width Petal.Length Petal.Width
+## 1:  virginica          6.5         3.0         5.55         2.0
+## 2: versicolor          5.9         2.8         4.35         1.3
+## 3:     setosa          5.0         3.4         1.50         0.2</code></pre>
+</div>
+<div id="programming-time-vs-readability" class="section level3">
+<h3>Programming time vs readability</h3>
+<p>It is a good idea to make use of familiar functions from base R to reduce programming time without losing readability.</p>
+<p>The data.table package provides a special built-in variable .SD. It refers to the subset of data for each unique value of the by argument. That is, the number of observations in the output will be equal to the number of unique values in by.</p>
+<p>Recall that the by argument allows us to separate a data.table into groups. We can now use the .SD variable to reference each group and apply functions separately. For example, suppose we had a data.table storing information about dogs:</p>
+<p>Sex Weight Age Height M 40 1 12 F 30 4 7 F 80 12 9 M 90 3 14 M 40 6 12 We could then use</p>
+<p>dogs[, lapply(.SD, mean), by = Sex] to produce average weights, ages, and heights for male and female dogs separately:</p>
+<p>Sex Weight Age Height 1: M 56.66667 3.333333 12.66667 2: F 55.00000 8.000000 8.00000 A data.table DT has been created for you and is available in the workspace. Type DT in the console to print it out and inspect it.</p>
+<p>Instructions Get the mean of columns y and z grouped by x by using .SD. Get the median of columns y and z grouped by x by using .SD.</p>
+<pre class="r"><code>DT &lt;- data.table(x = c(2, 1, 2, 1, 2, 2, 1), y = c(1, 3, 5, 7, 9, 11, 13),                 z = c(2, 4, 6, 8, 10, 12, 14))
+
+# A new data.table DT is available
+
+# Mean of columns
+DT[, lapply(.SD, mean) , by= x]</code></pre>
+<pre><code>##    x        y        z
+## 1: 2 6.500000 7.500000
+## 2: 1 7.666667 8.666667</code></pre>
+<pre class="r"><code># Median of columns
+DT[, lapply(.SD, median) , by= x]</code></pre>
+<pre><code>##    x y z
+## 1: 2 7 8
+## 2: 1 7 8</code></pre>
+</div>
+<div id="introducing-.sdcols" class="section level3">
+<h3>Introducing .SDcols</h3>
+<p>.SDcols specifies the columns of DT that are included in .SD. Using .SDcols comes in handy if you have too many columns and you want to perform a particular operation on a subset of the columns (apart from the grouping variable columns).</p>
+<p>Using .SDcols allows you to apply a function to all rows of a data.table, but only to some of the columns. For example, consider the dog example from the last exercise. If you wanted to compute the average weight and age (the second and third columns) for all dogs, you could assign .SDcols accordingly:</p>
+<p>dogs[, lapply(.SD, mean), .SDcols = 2:3] Weight Age 1: 56 5.2 While learning the data.table package, you may want to occasionally refer to the documentation. Have a look at ?data.table for more info on .SDcols.</p>
+<p>Yet another data.table, DT, has been prepared for you in your workspace. Start by printing it to the console.</p>
+<p>Instructions Calculate the sum of the columns that start with Q, using .SD and .SDcols. Set .SDcols equal to 2:4. Set .SDcols to be the result of a function call. This time, calculate the sum of columns H1 and H2 using paste0() to specify the .SDcols argument. Finally, select all but the first row of the groups names 6 and 8, returning only the grp column and the columns that start with Q. Use -1 in i of .SD and use paste0() again. Type desired_result into the console to see what your answer should look like.</p>
+<pre class="r"><code>DT &lt;- data.table(grp=c(6,6,8,8,8), Q1=sample(5,replace=TRUE),
+                 Q2=sample(5,replace=TRUE), Q3=sample(5,replace=TRUE),
+                 H1=sample(5,replace=TRUE), H2=sample(5,replace=TRUE))
+# A new data.table DT is available
+DT</code></pre>
+<pre><code>##    grp Q1 Q2 Q3 H1 H2
+## 1:   6  1  4  1  2  5
+## 2:   6  3  5  4  5  4
+## 3:   8  3  4  2  5  4
+## 4:   8  4  2  5  2  3
+## 5:   8  5  5  3  2  4</code></pre>
+<pre class="r"><code># Calculate the sum of the Q columns
+DT[,lapply(.SD, sum), .SDcols = 2:4]</code></pre>
+<pre><code>##    Q1 Q2 Q3
+## 1: 16 20 15</code></pre>
+<pre class="r"><code># Calculate the sum of columns H1 and H2 
+DT[,lapply(.SD, sum), .SDcols = 5:6]</code></pre>
+<pre><code>##    H1 H2
+## 1: 16 20</code></pre>
+<pre class="r"><code># Select all but the first row of groups 1 and 2, returning only the grp column and the Q columns
+DT[, .SD[-1], by = grp, .SDcols = paste0(&quot;Q&quot;,1:3)]</code></pre>
+<pre><code>##    grp Q1 Q2 Q3
+## 1:   6  3  5  4
+## 2:   8  4  2  5
+## 3:   8  5  5  3</code></pre>
+</div>
+<div id="mixing-it-together-lapply-.sd-.sdcols-and-.n" class="section level3">
+<h3>Mixing it together: lapply, .SD, .SDcols and .N</h3>
+<p>This exercise is a challenging one, so don’t give up! It’s important to remember that whenever the j argument is a list (e.g. if it contains .SD or a call to lapply()), a data.table is returned. For example:</p>
+<p>dogs[, lapply(.SD, mean), by = sex, .SDcols = c(“weight”, “age”)] will return a data.table containing average weights and ages for dogs of each sex.</p>
+<p>It’s also helpful to know that combining a list with a vector results in a new longer list. Lastly, note that when you select .N on its own, it is renamed N in the output for convenience when chaining.</p>
+<p>For this exercise, DT, which contains variables x, y, and z, is loaded in your workspace. You must combine lapply(), .SD, .SDcols, and .N to get your call to return a specific output. Good luck!</p>
+<p>Instructions Get the sum of all columns x, y and z and the number of rows in each group while grouping by x. Your answer should be identical to this: x x y z N 1: 2 8 26 30 4 2: 1 3 23 26 3 Get the cumulative sum of column x and y while grouping by x and z &gt; 8 such that the answer looks like this: by1 by2 x y 1: 2 FALSE 2 1 2: 2 FALSE 4 6 3: 1 FALSE 1 3 4: 1 FALSE 2 10 5: 2 TRUE 2 9 6: 2 TRUE 4 20 7: 1 TRUE 1 13</p>
+<pre class="r"><code># DT is pre-loaded
+DT &lt;- data.table(x=c(2,1,2,1,2,2,1), y=c(1,3,5,7,9,11,13), z=c(2,4,6,8,10,12,14))
+
+# Sum of all columns and the number of rows
+DT[,c(lapply(.SD, sum),.N), by = x, .SDcols= c(&quot;x&quot;,&quot;y&quot;,&quot;z&quot;)]</code></pre>
+<pre><code>##    x x  y  z N
+## 1: 2 8 26 30 4
+## 2: 1 3 23 26 3</code></pre>
+<pre class="r"><code># Cumulative sum of column x and y while grouping by x and z &gt; 8
+DT[,lapply(.SD, cumsum), by = .(by1= x, by2 = z&gt;8), .SDcols= c(&quot;x&quot;,&quot;y&quot;)]</code></pre>
+<pre><code>##    by1   by2 x  y
+## 1:   2 FALSE 2  1
+## 2:   2 FALSE 4  6
+## 3:   1 FALSE 1  3
+## 4:   1 FALSE 2 10
+## 5:   2  TRUE 2  9
+## 6:   2  TRUE 4 20
+## 7:   1  TRUE 1 13</code></pre>
+<p>Adding, updating and removing columns</p>
+<p>As you now know, := is defined for use in j only, and is used to update data.tables by reference. One way of using := is the LHS := RHS form, where LHS is a character vector of columns (referenced by name or number) you wish to update and RHS is the corresponding value for each column (Note: LHS stands for “left hand side” and RHS stands for “right hand side” in what follows).</p>
+<p>For example, the following line multiplies every row of column C by 10 and stores the result in C:</p>
+<p>DT[, C := C * 10] This first exercise will thoroughly test your understanding of := used in the LHS := RHS form. It’s time for you to show off your knowledge! A data.table DT has been defined for you in the sample code.</p>
+<p>Instructions Add a column to DT by reference, named Total, that contains sum(B) for each group in column A. Add 1L to the values in column B, but only in the rows 2 and 4. Add a new column Total2 that contains sum(B) grouped by A but just over rows 2, 3 and 4. Remove the Total column from DT. Use [[ to select the third column as a vector. Simply print it out to the console.</p>
+<pre class="r"><code># The data.table DT
+DT &lt;- data.table(A = letters[c(1, 1, 1, 2, 2)], B = 1:5)
+
+# Add column by reference: Total
+DT[, Total:= sum(B), by = A ]
+
+# Add 1 to column B
+DT[c(2,4), B:= B + 1L]
+
+# Add a new column Total2
+DT[2:4, Total2 := sum(B), by = A]
+
+# Remove the Total column
+DT[, Total := NULL]
+
+
+# Select the third column using `[[`
+DT[[3]]</code></pre>
+<pre><code>## [1] NA  6  6  5 NA</code></pre>
+</div>
+<div id="the-functional-form" class="section level3">
+<h3>The functional form</h3>
+<p>You’ve had practice with using := in the LHS := RHS form. The second way to use := is with functional form:</p>
+<p>DT[, <code>:=</code>(colA = colB + colC)] Notice that the := is surrounded by two tick marks! Otherwise data.table will throw a syntax error. It is also important to note that in the generic functional form above, my_fun() can refer to any function, including the basic arithmetic functions. The nice thing about the functional form is that you can get both the RHS alongside the LHS so that it’s easier to read.</p>
+<p>Time for some experimentation. A data.table DT has been prepared for you in the sample code.</p>
+<p>Instructions Update B with B + 1, add a new column C with A + B, and add a new column D of just 2’s. A variable my_cols has already been defined. Use it to delete these columns from DT. Finally, delete column D using the column number (2), not its name (D).</p>
+<pre class="r"><code># A data.table DT has been created for you
+DT &lt;- data.table(A = c(1, 1, 1, 2, 2), B = 1:5)
+
+# Update B, add C and D
+DT[, `:=`(B = B + 1, C = A + B,D = rep(2))]
+
+# Delete my_cols
+my_cols &lt;- c(&quot;B&quot;, &quot;C&quot;)
+DT[, (my_cols) := NULL]
+
+# Delete column 2 by number
+DT[, c(2):= NULL]</code></pre>
+</div>
 </div>
 <div id="data.table-expert" class="section level2">
 <h2>Data.table expert</h2>

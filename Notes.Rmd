@@ -338,19 +338,19 @@ Use [[ to select the third column as a vector. Simply print it out to the consol
 ```{r}
 # The data.table DT
 DT <- data.table(A = letters[c(1, 1, 1, 2, 2)], B = 1:5)
-
+DT
 # Add column by reference: Total
 DT[, Total:= sum(B), by = A ]
-
+DT
 # Add 1 to column B
 DT[c(2,4), B:= B + 1L]
-
+DT
 # Add a new column Total2
 DT[2:4, Total2 := sum(B), by = A]
-
+DT
 # Remove the Total column
 DT[, Total := NULL]
-
+DT
 
 # Select the third column using `[[`
 DT[[3]]
@@ -384,15 +384,137 @@ DT[, (my_cols) := NULL]
 DT[, c(2):= NULL]
 ```
 
+### Ready, set(), go!
+
+The set() function is used to repeatedly update a data.table by reference. You can think of the set() function as a loopable, low overhead version of the := operator, except that set() cannot be used for grouping operations. The structure of the set() function looks like this:
+
+set(DT, index, column, value)
+The function takes four arguments:
+
+A data.table with the columns you wish to update
+The index used in a loop (e.g. the i in for(i in 1:5))
+The column or columns you wish to update in the loop
+How the column or columns should be updated
+In the next two exercises, you will focus on using set() and its siblings setnames() and setcolorder(). You are two exercises away from becoming a data.table yeoman!
+
+Instructions
+A data.table DT has been created for you in the workspace. Check it out!
+Loop through columns 2, 3, and 4, and for each one, select 3 rows at random and set the value of that column to NA.
+Change the column names to lower case using the tolower() function. When setnames() is passed a single input vector, that vector needs to contain all the new names.
+Print the resulting DT to the console to see what changed.
+
+
 ```{r}
+
+set.seed(1)
+DT <- data.table(A = sample(5,10,TRUE), B = sample(5,10,TRUE),
+                 C = sample(5,10,TRUE), D = sample(5,10,TRUE))
+# Set the seed
+set.seed(1)
+
+# Check the DT that is made available to you
+DT
+
+# For loop with set
+for(i in 2:4) set(DT,sample(10,3),i, NA)
+
+# Change the column names to lowercase
+setnames(DT, tolower(names(DT)))
+
+# Print the resulting DT to the console
+DT
+```
+
+
+### The set() family
+
+A summary of the set() family:
+
+set() is a loopable, low overhead version of :=.
+You can use setnames() to set or change column names.
+setcolorder() lets you reorder the columns of a data.table.
+A data.table DT has been defined for you in the sample code.
+
+Instructions
+First, add a suffix "_2" to all column names of DT. Use paste0() here.
+Next, use setnames() to change a_2 to A2.
+Lastly, reverse the order of the columns with setcolorder().
+
+```{r}
+# Define DT
+DT <- data.table(a = letters[c(1, 1, 1, 2, 2)], b = 1)
+DT
+# Add a suffix "_2" to all column names
+setnames(DT, paste0(names(DT),"_2"))
+DT
+# Change column name "a_2" to "A2"
+setnames(DT, "a_2", "A2")
+DT
+# Reverse the order of the columns
+setcolorder(DT, c("b_2", "A2"))
+DT
 
 ```
 
-```{r}
-
-```
-
-    
-
+  
 ## Data.table expert
     Discover the potential behind indexing, followed by generating and using keys. The final part focuses     on fast ordered joins.
+
+### Selecting rows the data.table way
+
+In the video, Matt showed you how to use column names in i to select certain rows. Since practice makes perfect, and since you will find yourself selecting rows over and over again, it'll be good to do a small exercise on this with the familiar iris dataset.
+
+Instructions
+Convert the iris dataset to a data.table and store the result as iris.
+Select all the rows where Species is "virginica".
+Select all the rows where Species is either "virginica" or "versicolor".
+
+```{r}
+# The data.table package is pre-loaded
+
+# Convert iris to a data.table
+iris <- data.table(iris)
+
+# Species is "virginica"
+iris[Species == "virginica"]
+
+# Species is either "virginica" or "versicolor"
+iris[Species %in% c("virginica", "versicolor")]
+```
+
+### Removing columns and adapting your column names
+
+In the previous exercise, you selected certain rows from the iris data.table based on the column names. Now you have to take your understanding of the data.table package to the next level by using standard R functions and regular expressions to remove columns and change column names. To practice this, you'll do a little manipulation to prepare for the next exercise.
+
+Since regular expressions can be tricky, here is a quick refresher:
+
+Metacharacters allow you to match certain types of characters. For example, . means any single character, ^ means "begins with", and $ means "ends with".
+If you want to use any of the metacharacters as actual text, you need to use the \\ escape sequence.
+Instructions
+Simplify the names of the columns in iris that contain "Sepal." by removing the "Sepal." prefix. Use gsub() along with the appropriate regular expression inside a call to setnames().
+Remove the two columns that start with "Petal" from the iris data.table.
+
+```{r}
+# iris as a data.table
+iris <- as.data.table(iris)
+
+# Remove the "Sepal." prefix
+setnames(iris, names(iris), gsub("^Sepal.", "", names(iris)))
+iris
+# Remove the two columns starting with "Petal"
+iris[, grep("^Petal", names(iris)):= NULL]
+iris
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
