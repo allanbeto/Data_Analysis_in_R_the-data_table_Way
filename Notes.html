@@ -260,32 +260,32 @@ DT &lt;- data.table(A = rep(letters[2:1], each = 4L),
                  C = sample(8)) 
 DT</code></pre>
 <pre><code>##    A B C
-## 1: b 1 1
-## 2: b 1 7
-## 3: b 2 5
-## 4: b 2 3
-## 5: a 3 4
-## 6: a 3 6
-## 7: a 4 2
-## 8: a 4 8</code></pre>
+## 1: b 1 4
+## 2: b 1 2
+## 3: b 2 3
+## 4: b 2 6
+## 5: a 3 5
+## 6: a 3 7
+## 7: a 4 8
+## 8: a 4 1</code></pre>
 <pre class="r"><code># Combine the two steps in a one-liner
 DT2 &lt;- DT[, .(C = cumsum(C)), by = .(A, B)]
 DT2</code></pre>
 <pre><code>##    A B  C
-## 1: b 1  1
-## 2: b 1  8
-## 3: b 2  5
-## 4: b 2  8
-## 5: a 3  4
-## 6: a 3 10
-## 7: a 4  2
-## 8: a 4 10</code></pre>
+## 1: b 1  4
+## 2: b 1  6
+## 3: b 2  3
+## 4: b 2  9
+## 5: a 3  5
+## 6: a 3 12
+## 7: a 4  8
+## 8: a 4  9</code></pre>
 <pre class="r"><code>DT2[, .(C = tail(C, 2)), by = A]</code></pre>
-<pre><code>##    A  C
-## 1: b  5
-## 2: b  8
-## 3: a  2
-## 4: a 10</code></pre>
+<pre><code>##    A C
+## 1: b 3
+## 2: b 9
+## 3: a 8
+## 4: a 9</code></pre>
 </div>
 <div id="chaining-your-iris-dataset" class="section level3">
 <h3>Chaining your iris dataset</h3>
@@ -343,25 +343,25 @@ DT[, lapply(.SD, median) , by= x]</code></pre>
 # A new data.table DT is available
 DT</code></pre>
 <pre><code>##    grp Q1 Q2 Q3 H1 H2
-## 1:   6  4  1  1  2  2
-## 2:   6  2  3  4  1  4
-## 3:   8  3  1  1  1  1
-## 4:   8  1  2  1  5  2
-## 5:   8  2  3  1  2  2</code></pre>
+## 1:   6  3  2  5  4  4
+## 2:   6  3  4  3  5  1
+## 3:   8  1  2  3  5  4
+## 4:   8  2  2  4  1  1
+## 5:   8  2  3  3  2  5</code></pre>
 <pre class="r"><code># Calculate the sum of the Q columns
 DT[,lapply(.SD, sum), .SDcols = 2:4]</code></pre>
 <pre><code>##    Q1 Q2 Q3
-## 1: 12 10  8</code></pre>
+## 1: 11 13 18</code></pre>
 <pre class="r"><code># Calculate the sum of columns H1 and H2 
 DT[,lapply(.SD, sum), .SDcols = 5:6]</code></pre>
 <pre><code>##    H1 H2
-## 1: 11 11</code></pre>
+## 1: 17 15</code></pre>
 <pre class="r"><code># Select all but the first row of groups 1 and 2, returning only the grp column and the Q columns
 DT[, .SD[-1], by = grp, .SDcols = paste0(&quot;Q&quot;,1:3)]</code></pre>
 <pre><code>##    grp Q1 Q2 Q3
-## 1:   6  2  3  4
-## 2:   8  1  2  1
-## 3:   8  2  3  1</code></pre>
+## 1:   6  3  4  3
+## 2:   8  2  2  4
+## 3:   8  2  3  3</code></pre>
 </div>
 <div id="mixing-it-together-lapply-.sd-.sdcols-and-.n" class="section level3">
 <h3>Mixing it together: lapply, .SD, .SDcols and .N</h3>
@@ -886,6 +886,108 @@ DT[c(&quot;b&quot;,&quot;c&quot;), {print(.SD); .SD[c(1,.N)]}, by= .EACHI]</code
 ## 2: b 8 11
 ## 3: c 6 12
 ## 4: c 9  9</code></pre>
+</div>
+<div id="rolling-joins---part-one" class="section level3">
+<h3>Rolling joins - part one</h3>
+<p>In the last video, you learned about rolling joins. The roll applies to the NA values in the last join column. In the next three exercises, you will learn how to work with rolling joins in a data.table setting.</p>
+<p>Instructions The same keyed data.table from before, DT, has been provided in the sample code.</p>
+<p>Get the key of DT through the key() function. Use the super-charged row names to look up the row where A == “b” and B == 6, without using ==! Verify here that column C is NA. Based on the query that was written in the previous instruction, return the prevailing row before this “gap”. Specify the roll argument. Again, start with the code from the second instruction, but this time, find the nearest row. Specify the roll argument accordingly.</p>
+<pre class="r"><code># Keyed data.table DT
+DT &lt;- data.table(A = letters[c(2, 1, 2, 3, 1, 2, 3)], 
+                 B = c(5, 4, 1, 9, 8, 8, 6), 
+                 C = 6:12, 
+                 key = &quot;A,B&quot;)
+DT</code></pre>
+<pre><code>##    A B  C
+## 1: a 4  7
+## 2: a 8 10
+## 3: b 1  8
+## 4: b 5  6
+## 5: b 8 11
+## 6: c 6 12
+## 7: c 9  9</code></pre>
+<pre class="r"><code># Get the key of DT
+key(DT)</code></pre>
+<pre><code>## [1] &quot;A&quot; &quot;B&quot;</code></pre>
+<pre class="r"><code># Row where A == &quot;b&quot; and B == 6
+DT[.(&quot;b&quot;,6)]</code></pre>
+<pre><code>##    A B  C
+## 1: b 6 NA</code></pre>
+<pre class="r"><code># Return the prevailing row
+DT[.(&quot;b&quot;,6), roll=5]</code></pre>
+<pre><code>##    A B C
+## 1: b 6 6</code></pre>
+<pre class="r"><code># Return the nearest row
+DT[.(&quot;b&quot;,6), roll= &quot;nearest&quot;]</code></pre>
+<pre><code>##    A B C
+## 1: b 6 6</code></pre>
+</div>
+<div id="rolling-joins---part-two" class="section level3">
+<h3>Rolling joins - part two</h3>
+<p>It is time to move on to the rollends argument. The rollends argument is actually a vector of two logical values, but remember that you can always look this up via ?data.table. You were introduced to this argument via the control ends section. If you want to roll for a certain distance, you should continue to use the roll argument.</p>
+<p>Instructions For the group where column A is equal to “b”, print out the sequence when column B is set equal to (-2):10. Remember, A and B are the keys for this data.table. Extend the code you wrote for the first instruction to roll the prevailing values forward to replace the NAs. Extend your code with the appropriate rollends value to roll the first observation backwards.</p>
+<pre class="r"><code># Keyed data.table DT
+DT &lt;- data.table(A = letters[c(2, 1, 2, 3, 1, 2, 3)], 
+                 B = c(5, 4, 1, 9, 8, 8, 6), 
+                 C = 6:12, 
+                 key = &quot;A,B&quot;)
+DT</code></pre>
+<pre><code>##    A B  C
+## 1: a 4  7
+## 2: a 8 10
+## 3: b 1  8
+## 4: b 5  6
+## 5: b 8 11
+## 6: c 6 12
+## 7: c 9  9</code></pre>
+<pre class="r"><code># Print the sequence (-2):10 for the &quot;b&quot; group
+DT[.(&quot;b&quot;,(-2):10)]</code></pre>
+<pre><code>##     A  B  C
+##  1: b -2 NA
+##  2: b -1 NA
+##  3: b  0 NA
+##  4: b  1  8
+##  5: b  2 NA
+##  6: b  3 NA
+##  7: b  4 NA
+##  8: b  5  6
+##  9: b  6 NA
+## 10: b  7 NA
+## 11: b  8 11
+## 12: b  9 NA
+## 13: b 10 NA</code></pre>
+<pre class="r"><code># Add code: carry the prevailing values forwards
+DT[.(&quot;b&quot;,(-2):10), roll= TRUE]</code></pre>
+<pre><code>##     A  B  C
+##  1: b -2 NA
+##  2: b -1 NA
+##  3: b  0 NA
+##  4: b  1  8
+##  5: b  2  8
+##  6: b  3  8
+##  7: b  4  8
+##  8: b  5  6
+##  9: b  6  6
+## 10: b  7  6
+## 11: b  8 11
+## 12: b  9 11
+## 13: b 10 11</code></pre>
+<pre class="r"><code># Add code: carry the first observation backwards
+DT[.(&quot;b&quot;,(-2):10), roll= TRUE, rollends = TRUE]</code></pre>
+<pre><code>##     A  B  C
+##  1: b -2  8
+##  2: b -1  8
+##  3: b  0  8
+##  4: b  1  8
+##  5: b  2  8
+##  6: b  3  8
+##  7: b  4  8
+##  8: b  5  6
+##  9: b  6  6
+## 10: b  7  6
+## 11: b  8 11
+## 12: b  9 11
+## 13: b 10 11</code></pre>
 </div>
 </div>
 
