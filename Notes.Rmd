@@ -507,8 +507,71 @@ iris
 
 ```
 
-```{r}
+### Understanding automatic indexing
 
+You've been introduced to the rule that "if i is a single variable name, it is evaluated in the calling scope, otherwise inside DT's scope". This is a very important rule if you want to conceptually understand what is going on when using column names in i. Only single columns on the left side of operators benefit from automatic indexing.
+
+The iris data.table with the variable names you updated in the previous exercise is available in your workspace.
+
+Instructions
+Select the rows where the area is greater than 20 square centimeters.
+Add a new boolean column containing Width * Length > 25 and call it is_large. Remember that := can be used to create new columns.
+Select the rows for which the value of is_large is TRUE.
+
+```{r}
+# Cleaned up iris data.table
+iris
+
+# Area is greater than 20 square centimeters
+iris[ Width * Length> 20 ]
+
+# Add new boolean column
+iris[,is_large := Width * Length > 25]
+
+# Now large observations with is_large
+iris[is_large == TRUE]
+
+```
+
+### Selecting groups or parts of groups
+
+The previous exercise illustrated how you can manually set a key via setkey(DT, A, B). setkey() sorts the data by the columns that you specify and changes the table by reference. Having set a key will allow you to use it, for example, as a super-charged row name when doing selections. Arguments like mult and nomatch then help you to select only particular parts of groups.
+
+Furthermore, two of the instructions will require you to make use of by = .EACHI. This allows you to run j for each group in which each item in i joins too. The last instruction will require you to produce a side effect inside the j argument in addition to selecting rows.
+
+Instructions
+A data.table DT has already been created for you with the keys set to A and B.
+
+Select the "b" group without using ==.
+Select the "b" and "c" groups, again without using ==.
+Select the first row of the "b" and "c" groups using mult.
+Use by = .EACHI and .SD to select the first and last row of the "b" and "c" groups.
+Extend the previous command to print out the group before returning the first and last row from it. You can use curly brackets to include two separate instructions inside the j argument.
+
+```{r}
+# The 'keyed' data.table DT
+DT <- data.table(A = letters[c(2, 1, 2, 3, 1, 2, 3)], 
+                 B = c(5, 4, 1, 9, 8, 8, 6), 
+                 C = 6:12)
+setkey(DT, A, B)
+
+# Select the "b" group
+DT["b"]
+
+# "b" and "c" groups
+DT[c("b","c")]
+
+
+# The first row of the "b" and "c" groups
+DT[c("b","c"), mult="first"]
+
+
+# First and last row of the "b" and "c" groups
+DT[c("b","c"), .SD[c(1,.N)], by= .EACHI]
+
+
+# Copy and extend code for instruction 4: add printout
+DT[c("b","c"), {print(.SD); .SD[c(1,.N)]}, by= .EACHI]
 ```
 
 ```{r}
@@ -518,3 +581,4 @@ iris
 ```{r}
 
 ```
+
