@@ -574,11 +574,64 @@ DT[c("b","c"), .SD[c(1,.N)], by= .EACHI]
 DT[c("b","c"), {print(.SD); .SD[c(1,.N)]}, by= .EACHI]
 ```
 
+### Rolling joins - part one
+
+In the last video, you learned about rolling joins. The roll applies to the NA values in the last join column. In the next three exercises, you will learn how to work with rolling joins in a data.table setting.
+
+Instructions
+The same keyed data.table from before, DT, has been provided in the sample code.
+
+Get the key of DT through the key() function.
+Use the super-charged row names to look up the row where A == "b" and B == 6, without using ==! Verify here that column C is NA.
+Based on the query that was written in the previous instruction, return the prevailing row before this "gap". Specify the roll argument.
+Again, start with the code from the second instruction, but this time, find the nearest row. Specify the roll argument accordingly.
+
 ```{r}
+# Keyed data.table DT
+DT <- data.table(A = letters[c(2, 1, 2, 3, 1, 2, 3)], 
+                 B = c(5, 4, 1, 9, 8, 8, 6), 
+                 C = 6:12, 
+                 key = "A,B")
+DT
+# Get the key of DT
+key(DT)
+
+# Row where A == "b" and B == 6
+DT[.("b",6)]
+
+# Return the prevailing row
+DT[.("b",6), roll=5]
+
+# Return the nearest row
+DT[.("b",6), roll= "nearest"]
 
 ```
 
+### Rolling joins - part two
+
+It is time to move on to the rollends argument. The rollends argument is actually a vector of two logical values, but remember that you can always look this up via ?data.table. You were introduced to this argument via the control ends section. If you want to roll for a certain distance, you should continue to use the roll argument.
+
+Instructions
+For the group where column A is equal to "b", print out the sequence when column B is set equal to (-2):10. Remember, A and B are the keys for this data.table.
+Extend the code you wrote for the first instruction to roll the prevailing values forward to replace the NAs.
+Extend your code with the appropriate rollends value to roll the first observation backwards.
+
 ```{r}
+# Keyed data.table DT
+DT <- data.table(A = letters[c(2, 1, 2, 3, 1, 2, 3)], 
+                 B = c(5, 4, 1, 9, 8, 8, 6), 
+                 C = 6:12, 
+                 key = "A,B")
+DT
+# Print the sequence (-2):10 for the "b" group
+DT[.("b",(-2):10)]
+
+# Add code: carry the prevailing values forwards
+DT[.("b",(-2):10), roll= TRUE]
+
+# Add code: carry the first observation backwards
+DT[.("b",(-2):10), roll= TRUE, rollends = TRUE]
+
 
 ```
 
